@@ -36,8 +36,13 @@ def publish_record(topic: str, json_payload: str) -> Dict[str, Any]:
 
     # Use a dictionary lookup/creation pattern for the PublisherClient
     publisher = _publishers.get(topic)
-    if publisher is None:
-        publisher = pubsub_v1.PublisherClient()
+        # Define the batch settings:
+        # max_messages=1 ensures that as soon as the publisher.publish() is called,
+        # the single message is sent immediately without waiting for other messages.
+        custom_batch_settings = BatchSettings(max_messages=1)
+
+        # Instantiate the PublisherClient with the custom batch settings
+        publisher = pubsub_v1.PublisherClient(batch_settings=custom_batch_settings)
         _publishers[topic] = publisher
 
     try:
