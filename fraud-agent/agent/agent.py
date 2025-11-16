@@ -103,7 +103,7 @@ def create_root_agent(
         1. Evaluate the likelihood of it being a fraudulent transaction and give it a score between 0.0 and 1.0.
         2. Augment the input with two new fields: 'fraud_likelihood' set to this result of this evaluation and 'fraud_reason' with a short description of the reason for the fraud likelihood.
         3. Use "publish_record" to publish this augmented JSON object to the topic {augmented_topic_path}
-        4. If the evaluation of fraud from step 1 is > 0.8, use "publish_record" to publish a JSON object containing the timestamp, credit card number, fraud likelihood, and fraud likelihood reason to the topic {compromised_topic_path}.
+        4. If the evaluation of fraud from step 1 is > 0.8, use "publish_record" to publish a JSON object containing the timestamp, credit card number, fraud likelihood, and fraud reason to the topic {compromised_topic_path}.
         5. Return the augmented input from step #3.
 
         Sample input: {{"credit_card_number": "1234567812345678", "receiver": "Macy's", "amount": 100.05, "ip_address": "68.45.25.58", "timestamp":"2025-09-18T11:47:02.814"}}
