@@ -2,44 +2,44 @@
 
 # --- Function to check general status ---
 check_status() {
-    local exit_code=$?
-    if [ $exit_code -eq 0 ]; then
-        echo "✅ SUCCESS: $1"
-    else
-        echo "❌ FAILURE (Exit Code: $exit_code): $1" >&2
-        exit 1
-    fi
+  local exit_code=$?
+  if [ $exit_code -eq 0 ]; then
+    echo "✅ SUCCESS: $1"
+  else
+    echo "❌ FAILURE (Exit Code: $exit_code): $1" >&2
+    exit 1
+  fi
 }
 
 # --- Function to handle 'already exists' errors specifically ---
 create_resource_idempotently() {
-    local command_desc="$1"
-    shift
-    local exists_message_part="$1"
-    shift
+  local command_desc="$1"
+  shift
+  local exists_message_part="$1"
+  shift
 
-    local command_array=("$@")
+  local command_array=("$@")
 
-    local output
-    output=$("${command_array[@]}" 2>&1)
-    local exit_code=$?
+  local output
+  output=$("${command_array[@]}" 2>&1)
+  local exit_code=$?
 
-    if [ $exit_code -eq 0 ]; then
-        echo "✅ SUCCESS: ${command_desc}"
-    elif [[ "$output" =~ "$exists_message_part" ]]; then
-        echo "⚠️ WARNING: ${command_desc} (Resource already exists, treating as success.)"
-    else
-        echo "❌ FAILURE (Exit Code: $exit_code): ${command_desc}" >&2
-        echo "Error details: ${output}" >&2
-        exit 1
-    fi
+  if [ $exit_code -eq 0 ]; then
+    echo "✅ SUCCESS: ${command_desc}"
+  elif [[ "$output" =~ "$exists_message_part" ]]; then
+    echo "⚠️ WARNING: ${command_desc} (Resource already exists, treating as success.)"
+  else
+    echo "❌ FAILURE (Exit Code: $exit_code): ${command_desc}" >&2
+    echo "Error details: ${output}" >&2
+    exit 1
+  fi
 }
 
 # --- Argument Validation ---
 if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 <PROJECT_ID> <REGION> <REASONING_ENGINE_ID>"
-    echo "Example: $0 my-gcp-project us-central1 43210987654"
-    exit 1
+  echo "Usage: $0 <PROJECT_ID> <REGION> <REASONING_ENGINE_ID>"
+  echo "Example: $0 my-gcp-project us-central1 43210987654"
+  exit 1
 fi
 
 # --- Configuration Variables ---
@@ -86,18 +86,18 @@ echo "---"
 ## 2. Create Pub/Sub Topic
 echo "2. Creating Pub/Sub Topic: ${TOPIC_ID}..."
 create_resource_idempotently \
-    "Pub/Sub Topic creation" \
-    "Resource already exists" \
-    gcloud pubsub topics create "${TOPIC_ID}"
+  "Pub/Sub Topic creation" \
+  "Resource already exists" \
+  gcloud pubsub topics create "${TOPIC_ID}"
 echo "---"
 
 ## 3. Create Service Account
 echo "3. Creating Service Account: ${SERVICE_ACCOUNT_ID} (${SERVICE_ACCOUNT_EMAIL})..."
 create_resource_idempotently \
-    "Service Account creation" \
-    "already exists" \
-    gcloud iam service-accounts create "${SERVICE_ACCOUNT_ID}" \
-        --display-name="Fraud Example Service Account"
+  "Service Account creation" \
+  "already exists" \
+  gcloud iam service-accounts create "${SERVICE_ACCOUNT_ID}" \
+    --display-name="Fraud Example Service Account"
 
 # NEW: Pause to allow IAM system to recognize the new service account
 echo "Pausing for 10 seconds to allow service account propagation..."
@@ -108,8 +108,8 @@ echo "---"
 echo "4. Granting SA (${SERVICE_ACCOUNT_EMAIL}) Pub/Sub Subscriber Role..."
 # Granting permission at the project level is sufficient for the service account to be used by the subscription
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-    --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
-    --role="${PUBSUB_SUBSCRIBER_ROLE}"
+  --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
+  --role="${PUBSUB_SUBSCRIBER_ROLE}"
 check_status "IAM Policy Binding for Pub/Sub Subscriber Role"
 echo "---"
 
@@ -117,8 +117,8 @@ echo "---"
 echo "5. Granting SA (${SERVICE_ACCOUNT_EMAIL}) AI Platform User Role..."
 # This role grants the SA permission to call the streamQuery endpoint
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-    --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
-    --role="${AIPLATFORM_USER_ROLE}"
+  --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
+  --role="${AIPLATFORM_USER_ROLE}"
 check_status "IAM Policy Binding for AI Platform User Role"
 echo "---"
 
@@ -127,16 +127,16 @@ echo "---"
 echo "6. Creating Pub/Sub Push Subscription: ${SUBSCRIPTION_ID}..."
 # Use the calculated absolute path (SMT_FILE_PATH)
 create_resource_idempotently \
-    "Pub/Sub Push Subscription creation" \
-    "Resource already exists" \
-    gcloud pubsub subscriptions create "${SUBSCRIPTION_ID}" \
-        --topic="${TOPIC_ID}" \
-        --enable-message-ordering \
-        --push-endpoint="${PUSH_ENDPOINT_URL}" \
-        --push-auth-service-account="${SERVICE_ACCOUNT_EMAIL}" \
-        --ack-deadline="${ACK_DEADLINE}" \
-        --message-transforms-file="${SMT_FILE_PATH}" \
-        --push-no-wrapper
+  "Pub/Sub Push Subscription creation" \
+  "Resource already exists" \
+  gcloud pubsub subscriptions create "${SUBSCRIPTION_ID}" \
+    --topic="${TOPIC_ID}" \
+    --enable-message-ordering \
+    --push-endpoint="${PUSH_ENDPOINT_URL}" \
+    --push-auth-service-account="${SERVICE_ACCOUNT_EMAIL}" \
+    --ack-deadline="${ACK_DEADLINE}" \
+    --message-transforms-file="${SMT_FILE_PATH}" \
+    --push-no-wrapper
 echo "---"
 
 echo "🎉 All required GCP resources for the Reasoning Engine pipeline have been initialized successfully!"
