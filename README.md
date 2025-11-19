@@ -1,5 +1,5 @@
 # Vertex AI Agent Engine Pub/Sub Example
-Contains the code for a Vertex AI Agent Engine fraud agent fed data via Cloud Pub/Sub. The repository consists of four parts:
+Contains the code for a Vertex AI Agent Engine fraud agent fed data via Cloud Pub/Sub. For more details, see the [Medium post](https://medium.com/@kamal.aboulhosn/vertex-ai-agents-cloud-pub-sub-8a11dc949246). The repository consists of four parts:
 
 1. **fraud-agent**: A Python-based agent that runs on [Vertex AI Agent Engine](https://docs.cloud.google.com/agent-builder/agent-engine/overview), designed to evaluate credit card transactions for fraud. It includes a script to deploy the agent.
 2. **data-generator**: A Java-based application that generates fake credit card transactions and publishes them to Pub/Sub.
