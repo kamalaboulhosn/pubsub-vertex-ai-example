@@ -33,7 +33,7 @@ Then you can install the requirements locally and deploy the agent:
 pip install -r requirements.txt
 python3 deploy.py <PROJECT_ID> <REGION>
 ```
-The `STAGING_BUCKET` is the Cloud Storage bucket created in the output resources script. Once this step completes, you should see output like the following:
+Once this step completes, you should see output like the following:
 
 ```
 INFO: To use this AgentEngine in another session:
