@@ -5,7 +5,7 @@ Agent Engine SDK.
 The agent uses implicit session management and loads deployment dependencies
 from pyproject.toml.
 
-Usage: python deploy.py <PROJECT_ID> <REGION> <STAGING_BUCKET>
+Usage: python deploy.py <PROJECT_ID> <REGION>
 """
 import os
 import sys
@@ -80,15 +80,15 @@ def main():
   """Handles command-line arguments and application deployment."""
   global _CONFIG
 
-  # Check for correct number of arguments (script name + 3 arguments)
-  if len(sys.argv) != 4:
-    print("Usage: python deploy.py <PROJECT_ID> <REGION> <STAGING_BUCKET>", file=sys.stderr)
+  # Check for correct number of arguments (script name + 2 arguments)
+  if len(sys.argv) != 3:
+    print("Usage: python deploy.py <PROJECT_ID> <REGION>", file=sys.stderr)
     sys.exit(1)
 
   # Parse arguments
   project_id = sys.argv[1]
   location = sys.argv[2]
-  staging_bucket = sys.argv[3]
+  staging_bucket = "gs://fraud-example-staging-" + project_id
 
   # Store configuration globally for access by get_session_service
   _CONFIG["PROJECT_ID"] = project_id
