@@ -2,8 +2,8 @@
 Contains the code for a Vertex AI Agent Engine fraud agent fed data via Cloud Pub/Sub. For more details, see the [Medium post](https://medium.com/@kamal.aboulhosn/vertex-ai-agents-cloud-pub-sub-8a11dc949246). The repository consists of four parts:
 
 1. **fraud-agent**: A Python-based agent that runs on [Vertex AI Agent Engine](https://docs.cloud.google.com/agent-builder/agent-engine/overview), designed to evaluate credit card transactions for fraud. It includes a script to deploy the agent.
-2. **data-generator**: A Java-based application that generates fake credit card transactions and publishes them to Pub/Sub.
-3. **scripts**: A set of bash scripts to create and cleanup input and output resources for the agent including Pub/Sub topics and subscrptions and BigQuery tables.
+2. **data-generator**: A Java-based application that generates fake credit card transactions and publishes them to Pub/Sub.  (Disclaimer: This was generated using Gemini)
+3. **scripts**: A set of bash scripts to create and cleanup input and output resources for the agent including Pub/Sub topics and subscrptions and BigQuery tables. (Disclaimer: These were generated using Gemini)
 4. **smt**: A Pub/Sub [single message transform](https://docs.cloud.google.com/pubsub/docs/smts/smts-overview) [user-defined function](https://docs.cloud.google.com/pubsub/docs/smts/udfs-overview) used with the subscription that sends messsages to the agent.
 
 ## Requirements
