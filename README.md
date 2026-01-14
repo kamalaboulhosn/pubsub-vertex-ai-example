@@ -15,7 +15,7 @@ You need to have a Google Cloud project set up that is enabled for Pub/Sub, BigQ
 The first step is to create the resources used as outputs from the agent. After cloning the repository, run the following command from the top-level directory
 
 ```bash
-scripts/fraund-agent-resources.sh <PROJECT_ID> <REGION>
+scripts/create-fraud-agent-output-resources.sh <PROJECT_ID> <REGION>
 ```
 
 ## Deploy The Agent
@@ -49,7 +49,7 @@ Take note of the `ENGINE_ID`.
 To create the topic to publish messages to and the push subscription, run the following from the top-level directory of the repository:
 
 ```bash
-scripts/create-fraud-example-output-resources.sh <PROJECT_ID> <REGION> <ENGINE_ID>
+scripts/create-fraud-example-input-resources.sh <PROJECT_ID> <REGION> <ENGINE_ID>
 ```
 
 The `ENGINE_ID` is the one noted from the previous step.
@@ -69,7 +69,7 @@ java -jar target/TransactionGenerator.jar <PROJECT_ID> <REGION>
 If you want to delete all of the resources you can run the following commands:
 
 ```bash
-scripts/cleanup-fraud-example-input-resources.sh <PROJECT_ID> 
+scripts/cleanup-fraud-example-input-resources.sh <PROJECT_ID>
 scripts/cleanup-fraud-example-ou-resources.sh <PROJECT_ID>
 cd fraud-agent
 python3 delete.py <PROJECT_ID> <REGION> <ENGINE_ID>
