@@ -3,68 +3,16 @@ import logging
 from typing import Dict, Any, List
 
 from google.adk.agents import LlmAgent
-from google.adk.tools import FunctionTool
-from google.cloud import pubsub_v1
-from google.cloud.pubsub_v1.types import BatchSettings
+from google.adk.tools.pubsub.config import PubSubToolConfig
+from google.adk.tools.pubsub.pubsub_credentials import PubSubCredentialsConfig
+from google.adk.tools.pubsub.pubsub_toolset import PubSubToolset
+import google.auth
 
 # Configure basic logging (recommended over print statements for better visibility in deployments)
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 # --- Define Constants & Globals ---
 MODEL_NAME: str = "gemini-2.5-flash"
-
-# Cache for Pub/Sub publisher clients, one per topic.
-_publishers: Dict[str, pubsub_v1.PublisherClient] = {}
-
-
-# --- Define Tool(s) ---
-
-def publish_record(topic: str, json_payload: str) -> Dict[str, Any]:
-  """
-  Publishes a JSON string payload to a Google Cloud Pub/Sub topic.
-
-  This tool is synchronous and waits for the publish operation to complete.
-
-  Args:
-      topic: The full topic path (e.g., 'projects/id/topics/name').
-      json_payload: The JSON string data to publish.
-
-  Returns:
-      A dictionary (empty on success). The dictionary return type is
-      required by the Agent Engine tool contract.
-  """
-  logging.info(f"Attempting to publish to topic: {topic}")
-
-  # Use a dictionary lookup/creation pattern for the PublisherClient
-  publisher = _publishers.get(topic)
-  if publisher is None:
-    # Define the batch settings:
-    # max_messages=1 ensures that as soon as the publisher.publish() is called,
-    # the single message is sent immediately without waiting for other messages.
-    custom_batch_settings = BatchSettings(max_messages=1)
-
-    # Instantiate the PublisherClient with the custom batch settings
-    publisher = pubsub_v1.PublisherClient(batch_settings=custom_batch_settings)
-    _publishers[topic] = publisher
-
-  try:
-    # The publisher client requires data to be a bytestring.
-    data = json_payload.encode("utf-8")
-
-    # Publish the message and wait for the future to complete.
-    future = publisher.publish(topic, data)
-    future.result()
-
-    logging.info("Successfully published!")
-
-  except Exception as e:
-    # Use stderr for critical failure messages
-    logging.error(f"Could not publish record to {topic}: {e}")
-    # Return an empty dictionary on failure, matching the contract
-    return {}
-
-  # Return an empty dictionary on success as required by the Agent Engine tool contract.
-  return {}
 
 
 # --- Initialize Agent Creation Function ---
@@ -102,19 +50,33 @@ def create_root_agent(
         For each transaction:
         1. Evaluate the likelihood of it being a fraudulent transaction and give it a score between 0.0 and 1.0.
         2. Augment the input with two new fields: 'fraud_likelihood' set to this result of this evaluation and 'fraud_reason' with a short description of the reason for the fraud likelihood.
-        3. Use "publish_record" to publish this augmented JSON object to the topic {augmented_topic_path}
-        4. If the evaluation of fraud from step 1 is > 0.7, use "publish_record" to publish a JSON object containing the timestamp, credit card number, fraud likelihood, and fraud reason to the topic {compromised_topic_path}.
+        3. Use "publish_message" to publish this augmented JSON object to the topic {augmented_topic_path}. Use the 'message' argument for the JSON object and 'topic_name' for the topic.
+        4. If the evaluation of fraud from step 1 is > 0.7, use "publish_message" to publish a JSON object containing the timestamp, credit card number, fraud likelihood, and fraud reason to the topic {compromised_topic_path}.
         5. Return the augmented input from step #3.
 
         Sample input: {{"credit_card_number": "1234567812345678", "receiver": "Macy's", "amount": 100.05, "ip_address": "68.45.25.58", "timestamp":"2025-09-18T11:47:02.814"}}
         Sample output: {{"credit_card_number": "1234567812345678", "receiver": "Macy's", "amount": 100.05, "ip_address": "68.45.25.58", "timestamp":"2025-09-18T11:47:02.814", "fraud_likelihood": 0.8, "fraud_reason": "Multiple transactions from different countries"}}
         """
 
-  # 3. Instantiate and return the agent
+  # 3. Configure Pub/Sub tools
+  # Initialize the tools to use the application default credentials.
+  # https://cloud.google.com/docs/authentication/provide-credentials-adc
+  application_default_credentials, _ = google.auth.default()
+  credentials_config = PubSubCredentialsConfig(
+      credentials=application_default_credentials
+  )
+
+  tool_config = PubSubToolConfig(project_id=project_id)
+
+  pubsub_toolset = PubSubToolset(
+      credentials_config=credentials_config, pubsub_tool_config=tool_config
+  )
+
+  # 4. Instantiate and return the agent
   return LlmAgent(
       model=MODEL_NAME,
       name="FraudDetector",
       description="Determines risk of fraud in transactions.",
       global_instruction=global_instruction_template,
-      tools=[FunctionTool(publish_record)],
+      tools=[pubsub_toolset],
   )
